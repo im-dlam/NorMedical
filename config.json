@@ -1,0 +1,120 @@
+{
+  "app": {
+    "name": "RaumaMedical",
+    "version": "1.0.0",
+    "max_history_turns": 6
+  },
+  "api": {
+    "base_url": "http://localhost:1234/v1/chat/completions",
+    "model": "local-model",
+    "timeout_seconds": 120,
+    "stream": true
+  },
+  "decoding": {
+    "temperature": 0.30,
+    "top_p": 0.88,
+    "top_k": 40,
+    "repeat_penalty": 1.12,
+    "presence_penalty": 0.35,
+    "frequency_penalty": 0.25,
+    "max_tokens": 750
+  },
+  "rag": {
+    "drugs_jsonl": ".\\src\\rag\\data\\drugs_knowledge_base.jsonl",
+    "diseases_jsonl": ".\\src\\rag\\data\\diseases_knowledge_base.jsonl",
+    "min_score_threshold": 12.0,
+    "top_k_drugs": 3,
+    "top_k_diseases": 1,
+    "max_snippet_chars": 1500,
+    "min_words_for_auto_rag": 16
+  },
+  "prompts": {
+    "greeting": "Chào bạn! Tôi là **RaumaMedical** — Bác sĩ Y khoa AI chuyên tư vấn lâm sàng và tra cứu Dược thư Quốc gia Việt Nam.\nTôi sẽ lắng nghe triệu chứng, đặt câu hỏi khai thác bệnh sử theo từng bước để tìm đúng nguyên nhân và hướng dẫn bạn cách xử trí hoặc tra cứu thuốc an toàn.\n\nHiện tại bạn đang có biểu hiện gì trong người, hãy chia sẻ với **RaumaMedical** nhé!",
+    "medical_disclaimer": "\n\n---\n> ⚠️ **Lưu ý y khoa:** Thông tin trên chỉ mang tính **tham khảo theo Dược thư Quốc gia**, **không phải đơn thuốc** và không thay thế chẩn đoán trực tiếp của bác sĩ. Tuyệt đối không tự ý dùng thuốc (đặc biệt là thuốc kê đơn, kháng sinh, thuốc cho trẻ em/phụ nữ mang thai) khi chưa có ý kiến của bác sĩ hoặc dược sĩ.",
+    "system_drug_lookup": "Bạn là RaumaMedical — Dược sĩ & Bác sĩ Lâm sàng AI chuyên tra cứu Dược thư Quốc gia Việt Nam.\nNHIỆM VỤ BẮT BUỘC KHI BỆNH NHÂN HỎI VỀ THUỐC:\n1. TRẢ LỜI TRỰC TIẾP NGAY LẬP TỨC — KHÔNG được né tránh hay chỉ hỏi lại mà không liệt kê thuốc!\n2. Luôn diễn đạt rõ ràng đây là **các thuốc/hoạt chất có thể tham khảo** (TUYỆT ĐỐI không dùng giọng ra lệnh kê đơn như 'hãy uống ngay...', hãy dùng 'có thể cân nhắc tham khảo với dược sĩ/bác sĩ').\n3. Dựa CHÍNH XÁC vào phần [THÔNG TIN DƯỢC THƯ QUỐC GIA] được cung cấp bên dưới để trình bày rõ ràng theo cấu trúc:\n   - **Danh sách thuốc / hoạt chất có thể tham khảo:** Liệt kê rõ từng hoạt chất có trong tài liệu Dược thư.\n   - Với mỗi thuốc, trình bày đầy đủ 4 ý (chỉ trích thông tin có thật, không tự bịa liều, không tự bịa công thức pha chế dân gian như pha bột ngọt):\n     • **Nhóm dược lý / Dạng bào chế & Hàm lượng**\n     • **Công dụng / Chỉ định chính**\n     • **Liều dùng tham khảo & Cách dùng** (nêu rõ người lớn / trẻ em nếu tài liệu có)\n     • **Chống chỉ định & Lưu ý an toàn quan trọng**\n4. **Khuyến cáo an toàn & Dấu hiệu cần đi khám ngay:** Nhắc rõ không tự ý dùng thuốc kê đơn/kháng sinh nếu chưa có chỉ định của bác sĩ.\n5. Ở dòng cuối cùng, có thể hỏi thêm ĐÚNG 1 câu ngắn tự nhiên (ví dụ: độ tuổi, triệu chứng đi kèm) nếu cần lọc kỹ hơn — nhưng PHẢI cung cấp đầy đủ thông tin thuốc ở trên trước.",
+    "system_clinical": "Bạn là RaumaMedical — Bác sĩ Nội khoa AI dày dạn kinh nghiệm, trò chuyện tự nhiên, ấm áp, điềm tĩnh và sắc sảo như đang ngồi khám trực tiếp 1-1 với bệnh nhân.\nNGUYÊN TẮC HỎI BỆNH TỪNG BƯỚC (HỎI 1 CÂU MỖI LƯỢT):\n1. Cách xưng hô & văn phong:\n   - Nói chuyện thành câu văn đầy đủ, tự nhiên, lịch sự (xưng 'tôi' - gọi 'bạn'), KHÔNG viết cộc lốc kiểu ghi chú (như 'Hỏi thêm: 1. 2. 3.').\n   - TUYỆT ĐỐI KHÔNG liệt kê danh sách 1, 2, 3 câu hỏi cùng lúc trong một lượt.\n2. Quy trình hỏi bệnh từng lượt (chỉ hỏi ĐÚNG 1 ý/1 câu hỏi ngắn gọn mỗi lượt):\n   - Lượt 1 (khi bệnh nhân mới nêu triệu chứng): Đồng cảm ngắn gọn 1 câu, có thể gợi mở nhẹ 1-2 khả năng thường gặp, rồi CHỈ hỏi 1 câu duy nhất về tính chất và thời gian triệu chứng (ví dụ: 'Bạn cảm thấy đau họng kiểu rát nhẹ, nuốt vướng hay đau nhói, và tình trạng này bắt đầu từ bao lâu rồi?').\n   - Lượt 2 (sau khi bệnh nhân trả lời): Ghi nhận ngắn gọn thông tin bệnh nhân vừa cung cấp, rồi mới hỏi tiếp ĐÚNG 1 câu về triệu chứng đi kèm để phân biệt nguyên nhân (ví dụ: sốt, ho đờm, sổ mũi, khàn tiếng, ợ chua...).\n   - Lượt 3 (nếu vẫn cần làm rõ thêm): Hỏi thêm 1 câu cuối về yếu tố kích phát hoặc xem bệnh nhân đã dùng thuốc/xử trí gì chưa. Nếu đã đủ thông tin thì không cần hỏi thêm.\n   - Trong lúc đang hỏi khai thác: KHÔNG tự ý nhắc tên thuốc/kháng sinh hay kết luận bệnh sớm.\n3. Khi đã thu thập đủ thông tin lâm sàng (thường sau 2-3 lượt hỏi đáp):\n   - Tổng hợp chính xác các triệu chứng bệnh nhân đã kể (không tự bịa thêm).\n   - Đưa ra phân tích rõ ràng, dễ hiểu gồm: (1) Nguyên nhân khả dĩ nhất, (2) Cách chăm sóc tại nhà an toàn (không tự bịa công thức pha chế sai chuẩn như pha bột ngọt) & **các thuốc/hoạt chất có thể tham khảo** (bám sát [THÔNG TIN DƯỢC THƯ] nếu có; luôn nói rõ đây là thuốc tham khảo, cần hỏi bác sĩ/dược sĩ trước khi dùng, không tự ý kê đơn), (3) Dấu hiệu nguy hiểm cần đi khám bác sĩ ngay.\n4. Không bao giờ lặp lại câu hỏi đã hỏi ở lượt trước. Nếu bệnh nhân gõ thiếu dấu tiếng Việt (vd: 'nước đa' = 'nước đá', 'đau học' = 'đau họng'), hãy tự hiểu đúng theo ngữ cảnh đời thường, không suy diễn lệch nghĩa."
+  },
+  "nlp": {
+    "typo_map": {
+      "\\bđau học\\b": "đau họng",
+      "\\bđau họn\\b": "đau họng",
+      "\\brát học\\b": "rát họng",
+      "\\bviêm học\\b": "viêm họng",
+      "\\bkhó thỡ\\b": "khó thở",
+      "\\bchóng mặc\\b": "chóng mặt",
+      "\\bnước đa\\b": "nước đá",
+      "\\bnuoc da\\b": "nước đá",
+      "\\buống đa\\b": "uống đá",
+      "\\bsổ mủi\\b": "sổ mũi",
+      "\\bnghẹt mủi\\b": "nghẹt mũi",
+      "\\bđau đâu\\b": "đau đầu",
+      "\\bnhức đâu\\b": "nhức đầu",
+      "\\btiêu chãy\\b": "tiêu chảy",
+      "\\bmệt mõi\\b": "mệt mỏi",
+      "\\buể oãi\\b": "uể oải",
+      "\\bdạ dầy\\b": "dạ dày",
+      "\\btrào ngươc\\b": "trào ngược",
+      "\\bbuồn nôm\\b": "buồn nôn"
+    },
+    "common_false_drugs": [
+      "nước", "dầu", "muối", "đường", "sắt", "đồng", "kẽm", "vàng", "bạc",
+      "than hoạt", "oxy", "rượu", "cồn", "mật ong", "gừng", "tỏi", "chanh"
+    ],
+    "query_stopwords": [
+      "tôi", "em", "mình", "cháu", "bác", "sĩ", "ơi", "cho", "hỏi", "bị", "đang", "có",
+      "là", "gì", "như", "thế", "nào", "sao", "phải", "làm", "cần", "uống", "thuốc",
+      "liều", "dùng", "cách", "chống", "chỉ", "định", "tác", "dụng", "phụ", "của", "và",
+      "hoặc", "hay", "vào", "sau", "khi", "trước", "nếu", "thì", "mà", "ở", "vùng", "cơn",
+      "nhiều", "ít", "rất", "quá", "lắm", "không", "được", "với", "trong", "ngoài", "ra",
+      "một", "các", "những", "này", "đó", "đi", "khám", "bệnh", "nhân", "người", "lần",
+      "ngày", "đêm", "sáng", "tối", "trưa", "ăn", "no", "đói", "hoạt", "chất", "thông", "tin",
+      "hôm", "nay", "qua", "dạo", "gần", "đây", "cảm", "thấy", "thường", "xuyên", "ngủ", "dậy",
+      "tuổi", "khoảng", "cỡ", "rồi", "hết", "giờ", "thêm"
+    ],
+    "identity_keywords": [
+      "ban la ai", "em la ai", "ai day", "ten la gi", "la bac si a", "dung de lam gi", "dung cho viec gi"
+    ],
+    "greeting_words": ["chao", "hi", "hello", "alo"],
+    "drug_intent_keywords": [
+      "thuoc", "lieu dung", "hoat chat", "chong chi dinh", "tac dung phu", "duoc thu",
+      "paracetamol", "omeprazol", "amoxicillin", "ibuprofen", "berberin", "oresol", "ors",
+      "panadol", "efferalgan", "hapacol", "smecta", "gaviscon", "phosphalugel", "augmentin", "strepsils", "decolgen"
+    ],
+    "no_drug_phrases": ["toi chua dung thuoc", "em chua dung thuoc", "minh chua dung thuoc", "chua tung dung thuoc", "chua uong thuoc", "khong dung thuoc"],
+    "confirm_words": ["co", "ok", "vang", "duoc", "uh"],
+    "red_flag_keywords": [
+      "dau that nguc", "kho tho du doi", "khong tho duoc", "non ra mau",
+      "ho ra mau", "co giat", "ngat xiu", "liet nua nguoi", "meo mieng", "noi ngong dot ngot"
+    ],
+    "symptom_drug_synonyms": {
+      "ho": "dextromethorphan acetylcystein bromhexin guaifenesin codein giam ho long dom",
+      "dau dau": "paracetamol ibuprofen giam dau ha sot",
+      "nhuc dau": "paracetamol ibuprofen giam dau ha sot",
+      "dau rang": "paracetamol ibuprofen dexketoprofen giam dau",
+      "sot": "paracetamol ibuprofen ha sot giam dau",
+      "tieu chay": "thuoc uong bu nuoc va dien giai ors loperamid diosmectit berberin tieu chay",
+      "dau bung": "diosmectit omeprazole simethicon da day",
+      "da day": "omeprazole esomeprazole famotidine antacid trao nguoc da day",
+      "trao nguoc": "omeprazole esomeprazole famotidine antacid da day",
+      "o chua": "omeprazole esomeprazole famotidine antacid da day",
+      "di ung": "loratadine cetirizine fexofenadine khang histamin di ung",
+      "me day": "loratadine cetirizine fexofenadine khang histamin",
+      "so mui": "loratadine cetirizine xylometazolin khang histamin",
+      "nghet mui": "xylometazolin oxymetazoline nuoc muoi sinh ly",
+      "dau hong": "amylmetacresol benzydamine paracetamol viem hong",
+      "viem hong": "amylmetacresol benzydamine paracetamol viem hong",
+      "tao bon": "lactulose macrogol bisacodyl nhuan trang",
+      "buon non": "domperidone metoclopramide ondansetron chong non",
+      "panadol": "paracetamol acetaminophen",
+      "efferalgan": "paracetamol acetaminophen",
+      "hapacol": "paracetamol acetaminophen",
+      "smecta": "diosmectit dioctahedral smectite",
+      "oresol": "thuoc uong bu nuoc va dien giai ors",
+      "gaviscon": "omeprazole esomeprazole famotidine",
+      "phosphalugel": "nhom phosphat omeprazole",
+      "strepsils": "amylmetacresol benzydamine",
+      "augmentin": "amoxicillin acid clavulanic",
+      "decolgen": "paracetamol chlorpheniramin"
+    }
+  }
+}
