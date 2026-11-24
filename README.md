@@ -35,6 +35,14 @@
 - **Giảm ảo giác dược lý bằng nguồn chính thống:** Truy xuất trực tiếp chuyên luận từ **Dược thư Quốc gia Việt Nam** và **Bệnh học lâm sàng Vinmec**, hiển thị song song nguồn đối chứng theo thời gian thực.
 - **Bảo mật dữ liệu bệnh án 100% On-Premise:** Toàn bộ quá trình suy luận và truy xuất tri thức chạy trên máy cục bộ, không gửi thông tin sức khỏe của người dùng ra máy chủ bên ngoài.
 
+### Hình ảnh Demo & Biểu đồ Thực nghiệm
+
+| Giao diện Cổng Tư vấn Lâm sàng (Web FastAPI) | Đường cong Hội tụ Huấn luyện (QLoRA `504 steps`) |
+| :---: | :---: |
+| ![Demo Giao diện Web](assets/img/demo_web.png) | ![Training Loss](assets/img/chart_training_loss.png) |
+
+*(Đặt ảnh chụp màn hình giao diện Web tại `assets/img/demo_web.png` để hiển thị trực tiếp trên GitHub.)*
+
 ---
 
 ## 2. Cơ sở Nghiên cứu & Khảo sát Thực tế
@@ -55,6 +63,10 @@ Thiết kế hệ thống được xây dựng dựa trên số liệu khảo s�
 ### Khảo sát Cộng đồng Độc lập (`N = 164`, Thang Likert 1–5)
 - Điểm hài lòng hiện trạng với các công cụ AI y tế nói chung: Tốc độ `3.09` (SD `1.45`), Diễn đạt dễ hiểu `2.93` (SD `1.39`), Độ chi tiết `3.05` (SD `1.47`), Giúp yên tâm `3.10` (SD `1.39`), Tổng thể `3.21` (SD `1.35`).
 - Lo ngại hàng đầu: Lộ thông tin bệnh sử riêng tư (**29.27%**), câu trả lời chung chung (**25.00%**), không rõ nguồn Bộ Y tế (**18.90%**), sợ dùng nhầm thuốc (**15.85%**).
+
+| Phân tích Nỗi đau & Kỳ vọng (`N = 120`) | Lo ngại & Mức độ Sẵn sàng (`N = 164`) |
+| :---: | :---: |
+| ![Khảo sát N=120](assets/img/chart_survey_n120.png) | ![Khảo sát N=164](assets/img/chart_survey_n164.png) |
 
 ---
 
