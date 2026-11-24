@@ -20,7 +20,7 @@
 | [02. Khảo sát Thực tế (`N=120` & `N=164`)](#2-cơ-sở-nghiên-cứu--khảo-sát-thực-tế) | [07. Tham chiếu Cấu hình & API Reference](#7-tham-chiếu-cấu-hình--api-reference) |
 | [03. Kho Tri thức & Công thức BM25 RAG](#3-kho-tri-thức--cơ-chế-truy-xuất-rag) | [08. Kịch bản Thực nghiệm & Bộ Kiểm thử](#8-kịch-bản-thực-nghiệm--bộ-kiểm-thử) |
 | [04. Huấn luyện QLoRA & Tối ưu Suy luận](#4-huấn-luyện-mô-hình--tối-ưu-suy-luận) | [09. Giới hạn Hiện tại & Lộ trình Phát triển](#9-giới-hạn-hiện-tại--lộ-trình-phát-triển) |
-| [05. Kiến trúc Hệ thống & Cấu trúc Mã nguồn](#5-kiến-trúc-hệ-thống--cấu-trúc-mã-nguồn) | [10. Nhóm Thực hiện, Tham khảo & Miễn trừ](#10-nhóm-thực-hiện-tài-liệu-tham-khảo--miễn-trừ-y-khoa) |
+| [05. Kiến trúc Hệ thống & Cấu trúc Mã nguồn](#5-kiến-trúc-hệ-thống--cấu-trúc-mã-nguồn) | [10. Tài liệu Tham khảo & Miễn trừ Y khoa](#10-tài-liệu-tham-khảo--miễn-trừ-y-khoa) |
 
 ---
 
@@ -274,12 +274,7 @@ python tests/test_edge_cases.py
 
 ---
 
-## 10. Nhóm Thực hiện, Tài liệu Tham khảo & Miễn trừ Y khoa
-
-### Thông tin Học phần & Nhóm Thực hiện
-- **Học phần:** Đồ án 1 — Năm học 2025 – 2026
-- **Giảng viên hướng dẫn:** ThS. Phạm Đức Anh
-- **Nhóm 9:** Lê Đình Lâm (Trưởng nhóm), Vũ Tuấn Phong, Tăng Văn Hào, Phạm Trung Hiếu, Bùi Tiến Dũng.
+## 10. Tài liệu Tham khảo & Miễn trừ Y khoa
 
 ### Tài liệu Tham khảo
 - Bộ Y tế Việt Nam (2022). *Dược thư Quốc gia Việt Nam lần xuất bản thứ ba*. Nhà xuất bản Y học, Hà Nội.
