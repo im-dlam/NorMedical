@@ -132,10 +132,21 @@ cp keys.example.json keys.json
 ```
 *(File `keys.json` đã được đưa vào `.gitignore` để không đẩy lên Git.)*
 
-### Bước 3: Bật LM Studio Local Server
-1. Mở **LM Studio** và nạp mô hình GGUF (`qwen3-vl-4b-medical` hoặc tương đương).
-2. Đặt **Context Length = `4096`**.
-3. Vào mục **Developer** (`<-->`) -> bật **Start Server** (mặc định `http://localhost:1234/v1/chat/completions`, có thể cấu hình trong `config.json`).
+### Bước 3: Tải mô hình từ Hugging Face & Bật LM Studio Local Server
+- **Kho mô hình đã huấn luyện (LoRA & GGUF):** https://huggingface.co/imdlam/q3medical
+
+1. Mở phần mềm **LM Studio**, vào mục tìm kiếm (**Discover / Search**) và tìm trực tiếp:
+   ```text
+   imdlam/q3medical
+   ```
+   Tải bản lượng tử hóa **GGUF (`Q4_K_M`)** về máy và chọn nạp mô hình ở thanh trên cùng.
+2. *(Tùy chọn tải thủ công bằng CLI nếu không tải qua LM Studio):*
+   ```bash
+   pip install huggingface_hub
+   huggingface-cli download imdlam/q3medical --local-dir ./models/q3medical
+   ```
+3. Đặt **Context Length = `4096`** trong LM Studio để đảm bảo đủ bộ nhớ cho các chuyên luận Dược thư.
+4. Vào mục **Developer** (`<-->`) -> bật **Start Server** (mặc định `http://localhost:1234/v1/chat/completions`, có thể cấu hình trong `config.json`).
 
 ### Bước 4: Khởi chạy hệ thống
 - **Giao diện Web FastAPI (cổng mặc định `8386`):**
