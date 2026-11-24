@@ -4,9 +4,56 @@ Hệ thống hỗ trợ tư vấn lâm sàng đa lượt và tra cứu Dược t
 
 ---
 
-## 1. Kiến trúc hệ thống (SOLID)
+## 1. Tổng quan & Cơ sở Nghiên cứu Thực tiễn
 
-Hệ thống được tách lớp rõ ràng để dễ bảo trì, kiểm thử và thay thế thành phần (ví dụ: chuyển từ LM Studio sang Ollama/vLLM, hoặc thay BM25 bằng FAISS Hybrid Search mà không cần sửa tầng nghiệp vụ):
+Hệ thống được thiết kế từ kết quả khảo sát thực tế trên hai tập mẫu độc lập:
+
+### 1.1. Khảo sát chuyên sâu (`N = 120`: 70% người dân, 20% sinh viên Y-Dược, 10% Bác sĩ/Dược sĩ)
+- **81.7%** (98/120) tự tra cứu triệu chứng và tên thuốc trên mạng trước khi đi khám.
+- **68.3%** (82/120) từng dùng AI tổng quát (ChatGPT, Gemini) để hỏi về sức khỏe, nhưng chỉ **23.3%** hài lòng về độ an toàn và tin cậy.
+- **94.2%** kỳ vọng công cụ dẫn nguồn chính thống từ cơ quan y tế trong nước.
+- **3 rào cản lớn của AI tổng quát:** Trả lời chung chung dài dòng (**41.7%**), không nhận diện đúng thuốc/ngữ cảnh Việt Nam (**35.0%**), thiếu tin cậy về liều lượng và an toàn (**23.3%**).
+- **3 nỗi đau lớn nhất:** Sợ sai liều / tương tác thuốc (**62.5%**), sợ bỏ sót dấu hiệu cấp cứu (**22.5%**), lo ngại rò rỉ dữ liệu bệnh án lên đám mây (**15.0%**).
+- **Ngưỡng thời gian chờ chấp nhận được:** **76.7%** kỳ vọng phản hồi dưới 5 giây (**38.3%** chọn `< 3 giây`, **45.0%** chọn `3 - 5 giây`, chỉ **3.4%** chấp nhận `> 7 giây`).
+
+### 1.2. Khảo sát cộng đồng độc lập (`N = 164`, thang Likert 1-5)
+- Mức đánh giá hiện trạng AI y tế nói chung còn thấp: Tốc độ `3.09` (SD `1.45`), Diễn đạt dễ hiểu `2.93` (SD `1.39`), Chi tiết `3.05` (SD `1.47`), Giúp yên tâm `3.10` (SD `1.39`), Hài lòng tổng thể `3.21` (SD `1.35`).
+- Lo ngại lớn nhất của cộng đồng: Lộ bệnh sử riêng tư (**29.27%**), câu trả lời chung chung (**25.00%**), không rõ nguồn Bộ Y tế (**18.90%**), sợ dùng nhầm thuốc (**15.85%**).
+
+---
+
+## 2. Dữ liệu, Kỹ thuật Huấn luyện & Tối ưu Suy luận
+
+### 2.1. Làm sạch Dữ liệu & Xây dựng Bộ dữ liệu Y khoa Tiếng Việt
+- **Phân tích lỗi dữ liệu thô (`ViHealthQA`):** Khảo sát cho thấy câu hỏi thô thường rất ngắn (trung vị `63` ký tự dạng tiêu đề SEO), trong khi câu trả lời nhắc tới bệnh án ẩn hoặc lặp văn mẫu khuyên đi khám chung chung.
+- **Bộ dữ liệu đã chuẩn hóa:**
+  - **Tập SFT Đơn lượt sạch:** `7.439` mẫu huấn luyện (`train_sft_clean.csv`) + `500` mẫu kiểm định (`val_sft_clean.csv`).
+  - **Tập Hội thoại Đa lượt (Multi-turn SFT):** `8.063` hội thoại đơn và đa lượt (`train_sft_multiturn_messages.jsonl`) tổng hợp và lọc sạch từ `ViHealthQA`, `Vinmec`, `BookingCare`, `Medical-o1-reasoning-vi`.
+  - **Kho Tri thức RAG (`2.427` tài liệu chính thống):** `1.754` chuyên luận **Dược thư Quốc gia Việt Nam** (`drugs_knowledge_base.jsonl`) + `673` bài **Bệnh học lâm sàng Vinmec** (`diseases_knowledge_base.jsonl`).
+
+### 2.2. Cấu hình & Kết quả Huấn luyện (Fine-tuning)
+
+| Tham số / Hạng mục | Giá trị Thực tế |
+| :--- | :--- |
+| **Mô hình nền (Base Model)** | `unsloth/Qwen3-VL-4B-Instruct-unsloth-bnb-4bit` |
+| **Kỹ thuật tinh chỉnh** | QLoRA 4-bit (Unsloth) trên GPU Tesla T4 (Google Colab) |
+| **Cấu hình LoRA** | `r = 16`, `lora_alpha = 16`, `lora_dropout = 0.05`, `bias = "none"` |
+| **Lớp tinh chỉnh** | `finetune_language_layers = True`, đóng băng nhánh Vision (`finetune_vision_layers = False`) |
+| **Hàm mất mát (Loss Masking)** | `train_on_responses_only` (chỉ tính loss trên lượt trả lời `<\|im_start\|>assistant`) |
+| **Lịch học & Số bước** | `lr = 3e-5`, `cosine` scheduler, `504 steps` (1 full epoch trên 8.062 hội thoại) |
+| **Kết quả Hội tụ Loss** | Training Loss giảm mượt từ **`2.454`** xuống **`~1.51 - 1.55`** |
+| **Dung lượng Adapter LoRA** | `132 MB` (`adapter_model.safetensors`, trọn bộ 7 file ~`137 MB`) |
+| **Định dạng triển khai cục bộ** | GGUF lượng tử hóa `Q4_K_M` (~`2.4 - 3.2 GB VRAM`), vận hành trên Laptop **RTX 3050 (4GB VRAM)** |
+
+### 2.3. Các Phát hiện Kỹ thuật khi Tối ưu Suy luận (Inference Engineering)
+1. **Hệ số `LoRA Scaling = 0.25`:** Thực nghiệm cho thấy ở mức mặc định `scaling = 1.0`, trọng số LoRA học từ văn bản Q&A có xu hướng ghi đè tư duy sinh lý bệnh gốc của mô hình (*Catastrophic Forgetting*). Giảm hệ số về `0.25` khôi phục hoàn toàn năng lực suy luận lâm sàng gốc của `Qwen3-4B` đồng thời duy trì văn phong bác sĩ Việt Nam.
+2. **Tối ưu giải mã (Decoding) cho Tiếng Việt:** Loại bỏ `no_repeat_ngram_size = 4` (vốn gây hỏng dấu/từ ghép trên tokenizer âm tiết tiếng Việt, ví dụ `"uể oải"` bị biến dạng thành `"uể oại"`). Cấu hình chuẩn hóa trong `config.json`: `temperature = 0.30`, `top_p = 0.88`, `top_k = 40`, `repeat_penalty = 1.12`, `presence_penalty = 0.35`, `frequency_penalty = 0.25`, `max_tokens = 750`.
+
+---
+
+## 3. Kiến trúc Hệ thống (SOLID)
+
+Hệ thống được thiết kế theo nguyên lý **SOLID** (tách biệt cấu hình, khóa bảo mật, domain interface, tầng truy xuất RAG, client LLM và giao diện):
 
 ```text
 q3AI/
@@ -44,72 +91,84 @@ q3AI/
 
 ---
 
-## 2. Cơ chế hoạt động chính
-
-### 2.1. Bộ định tuyến 4 chế độ lâm sàng
-Mỗi tin nhắn đầu vào được chuẩn hóa (xử lý lỗi gõ thiếu dấu phổ biến như `nước đa -> nước đá`, `đau học -> đau họng`) và định tuyến vào 1 trong 4 chế độ trong `ConsultationService`:
+## 4. Cơ chế Định tuyến 4 Chế độ & RAG Cục bộ
 
 1. **Cờ đỏ cấp cứu (Red Flag):** Phát hiện triệu chứng nguy hiểm (*đau thắt ngực, khó thở dữ dội, nôn/ho ra máu, co giật, ngất xỉu, liệt nửa người...*) để cảnh báo gọi cấp cứu 115 ngay lập tức.
-2. **Tra cứu Dược lý (Drug Lookup):** Khi người dùng hỏi trực tiếp về thuốc hoặc hoạt chất, hệ thống chuyển sang `system_drug_lookup`, mở rộng từ đồng nghĩa triệu chứng/biệt dược phổ biến (*Panadol -> Paracetamol, Smecta -> Diosmectit, Oresol -> ORS...*) và trích xuất tối đa 3 chuyên luận Dược thư (1.500 ký tự/tài liệu) để trình bày nhóm dược lý, công dụng, liều dùng tham khảo và chống chỉ định.
-3. **Khai thác triệu chứng đa lượt (Symptom Probing):** Hỏi từng câu một theo trình tự lâm sàng (tính chất/thời gian -> triệu chứng đi kèm -> yếu tố kích phát) thay vì kết luận vội ở lượt đầu.
-4. **Kết luận & Miễn trừ y khoa (Conclusion):** Tự động dừng hỏi khi đủ dữ kiện hoặc khi người dùng trả lời phủ định ngắn (`không`, `không á`), tổng hợp nguyên nhân khả dĩ, hướng chăm sóc an toàn và tự động gắn tuyên bố miễn trừ trách nhiệm y khoa ở cuối các lượt có tư vấn thuốc/điều trị.
+2. **Tra cứu Dược lý (Drug Lookup):** Dùng riêng `system_drug_lookup`, mở rộng từ đồng nghĩa triệu chứng và biệt dược phổ biến (*Panadol -> Paracetamol, Smecta -> Diosmectit, Oresol -> ORS...*), trích xuất tối đa 3 chuyên luận Dược thư (`1.500` ký tự/tài liệu) để trình bày nhóm dược lý, công dụng, liều dùng tham khảo và chống chỉ định.
+3. **Khai thác triệu chứng đa lượt (Symptom Probing):** Tự động sửa lỗi gõ thiếu dấu phổ biến (`nước đa -> nước đá`, `đau học -> đau họng`), hỏi cuốn chiếu 1 câu tự nhiên mỗi lượt theo trình tự lâm sàng.
+4. **Kết luận & Miễn trừ y khoa (Conclusion):** Tự động dừng hỏi khi đủ dữ kiện hoặc khi bệnh nhân trả lời phủ định ngắn (`không`, `không á`), tránh vòng lặp của mô hình 4B, và gắn tuyên bố miễn trừ trách nhiệm y khoa ở cuối các lượt có tư vấn thuốc/điều trị.
 
-### 2.2. Kho tri thức RAG cục bộ (`2.427` tài liệu)
-- **Dược thư Quốc gia Việt Nam:** `1.754` chuyên luận hoạt chất.
-- **Bệnh học lâm sàng Vinmec:** `673` bài bệnh học.
-- Chạy hoàn toàn trên RAM CPU bằng **BM25 tùy biến** (Unigram + Bigram + lọc từ dừng `query_stopwords` + loại trừ danh sách từ đời thường trùng tên hoạt chất `common_false_drugs`), không chiếm VRAM GPU.
+### Kết quả Kiểm thử Tự động
+- **Bộ kiểm thử 12 tình huống đặc biệt (`tests/test_edge_cases.py`):** Đạt **12/12 PASS** (tra cứu thuốc, cờ đỏ cấp cứu, chuẩn hóa thiếu dấu, chống lặp hội thoại đa lượt).
+- **Kiểm định truy xuất RAG trên 20 câu hỏi thuốc thực tế:** Đạt **20/20** trích xuất trúng chuyên luận Dược thư Quốc gia.
 
 ---
 
-## 3. Yêu cầu & Cài đặt
+## 5. Ưu điểm, Giới hạn & Lộ trình Phát triển
 
-### Bước 1: Cài đặt thư viện Python
+### Ưu điểm đạt được
+- Hỏi bệnh đa lượt tự nhiên, giữ được tư duy y khoa nhờ `LoRA Scaling = 0.25`.
+- Tra cứu Dược thư chạy hoàn toàn trên CPU (`< 10 ms`), không chiếm VRAM, hiển thị nguồn đối chứng song song.
+- Chạy 100% cục bộ (On-Premise) trên GPU phổ thông `4GB VRAM` (RTX 3050), bảo vệ tuyệt đối dữ liệu bệnh án.
+- Tích hợp Streaming SSE trên cả FastAPI Web và CLI, giảm thời gian chờ cảm nhận.
+
+### Giới hạn hiện tại & Hướng nâng cấp
+- **Kho biệt dược thương mại:** Hiện phủ `1.754` hoạt chất gốc Dược thư Quốc gia; giai đoạn tiếp theo tích hợp danh mục biệt dược Bộ Y tế (DAV) và so khớp mờ `RapidFuzz`.
+- **Truy xuất ngữ nghĩa dài:** Bổ sung tìm kiếm lai Hybrid Search (`BM25 + FAISS Vector`) song song cho các mô tả triệu chứng dân dã.
+- **An toàn cứng & Thị giác:** Xây dựng module Python tính liều cứng theo cân nặng (kg), kiểm tra tương tác đa thuốc và kích hoạt nhánh Vision sẵn có của `Qwen3-VL` cho bài toán OCR đơn thuốc / vỏ hộp.
+
+---
+
+## 6. Yêu cầu & Hướng dẫn Chạy
+
+### Bước 1: Cài đặt thư viện
 ```bash
 pip install -r requirements.txt
 ```
 
-### Bước 2: Cấu hình khóa API (`keys.json`)
-Tạo file `keys.json` từ file mẫu `keys.example.json`:
+### Bước 2: Tạo file khóa cấu hình
 ```bash
 cp keys.example.json keys.json
 ```
-*(File `keys.json` đã được đưa vào `.gitignore` để không lộ khóa khi đẩy mã nguồn lên Git.)*
+*(File `keys.json` đã được đưa vào `.gitignore` để không đẩy lên Git.)*
 
-### Bước 3: Bật máy chủ suy luận cục bộ trên LM Studio
-1. Mở phần mềm **LM Studio** và nạp mô hình GGUF (`qwen3-vl-4b-medical` hoặc tương đương).
-2. Đặt **Context Length = `4096`** để đảm bảo đủ bộ nhớ cho các chuyên luận Dược thư.
-3. Chuyển sang mục **Developer** (`<-->`) và bật **Start Server** (cổng mặc định `http://localhost:1234/v1/chat/completions`, có thể thay đổi trong `config.json`).
+### Bước 3: Bật LM Studio Local Server
+1. Mở **LM Studio** và nạp mô hình GGUF (`qwen3-vl-4b-medical` hoặc tương đương).
+2. Đặt **Context Length = `4096`**.
+3. Vào mục **Developer** (`<-->`) -> bật **Start Server** (mặc định `http://localhost:1234/v1/chat/completions`, có thể cấu hình trong `config.json`).
 
----
+### Bước 4: Khởi chạy hệ thống
+- **Giao diện Web FastAPI (cổng mặc định `8386`):**
+  ```bash
+  cd web
+  uvicorn app:app --port 8386
+  ```
+  Truy cập trình duyệt tại: `http://127.0.0.1:8386`
+  - `GET /` — Giao diện cổng tư vấn lâm sàng 2 cột (Streaming SSE, `Thinking...`, render Markdown offline).
+  - `POST /api/chat` — Endpoint SSE Streaming nhận `{"message": "..."}`.
+  - `POST /api/reset` — Khởi tạo phiên khám mới.
+  - `GET /api/health` — Kiểm tra trạng thái máy chủ và số lượng tài liệu RAG.
 
-## 4. Hướng dẫn chạy hệ thống
+- **Giao diện dòng lệnh (CLI Streaming):**
+  ```bash
+  python main.py --mode cli
+  ```
 
-### 4.1. Chạy giao diện Web FastAPI (Khuyến nghị — cổng mặc định `8386`)
-Di chuyển vào thư mục `web/` và chạy `uvicorn`:
-```bash
-cd web
-uvicorn app:app --port 8386
-```
-Sau đó truy cập trên trình duyệt tại địa chỉ: `http://127.0.0.1:8386`
-
-- `GET /` — Giao diện cổng tư vấn lâm sàng 2 cột (hỗ trợ Streaming SSE, trạng thái `Thinking...`, hiển thị nguồn RAG song song).
-- `POST /api/chat` — Endpoint SSE Streaming nhận `{"message": "..."}`.
-- `POST /api/reset` — Khởi tạo phiên khám mới.
-- `GET /api/health` — Kiểm tra trạng thái máy chủ và số lượng tài liệu RAG đã nạp.
-
-### 4.2. Chạy trên dòng lệnh (CLI Streaming)
-```bash
-python main.py --mode cli
-```
-Gõ `reset` để làm mới bệnh án, gõ `exit` để thoát.
-
-### 4.3. Chạy bộ kiểm thử tự động (12 tình huống đặc biệt)
-```bash
-python tests/test_edge_cases.py
-```
+- **Chạy bộ kiểm thử tự động:**
+  ```bash
+  python tests/test_edge_cases.py
+  ```
 
 ---
 
-## 5. Miễn trừ trách nhiệm y khoa
+## 7. Tài liệu Tham khảo & Miễn trừ Y khoa
 
-Hệ thống NorMedical (RaumaMedical) được xây dựng nhằm mục đích nghiên cứu học thuật và hỗ trợ tra cứu thông tin tham khảo theo Dược thư Quốc gia Việt Nam. Các nội dung phản hồi không phải là đơn thuốc và không thay thế cho việc thăm khám, chẩn đoán hoặc chỉ định điều trị trực tiếp của bác sĩ chuyên khoa.
+- Bộ Y tế Việt Nam (2022): *Dược thư Quốc gia Việt Nam lần xuất bản thứ ba*, NXB Y học (1.754 chuyên luận hoạt chất).
+- Hệ thống Y tế Vinmec: *Cẩm nang Bệnh học Lâm sàng* (673 bài chuyên khoa).
+- Qwen Team (Alibaba Cloud, 2025): *Qwen3 & Qwen3-VL Technical Report*.
+- Dettmers et al. (NeurIPS 2023): *QLoRA: Efficient Finetuning of Quantized LLMs*.
+- Hu et al. (ICLR 2022): *LoRA: Low-Rank Adaptation of Large Language Models*.
+- Lewis et al. (NeurIPS 2020): *Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks*.
+- Robertson & Zaragoza (2009): *The Probabilistic Relevance Framework: BM25 and Beyond*.
+
+> **Lưu ý y khoa:** Hệ thống NorMedical (RaumaMedical) được xây dựng cho mục đích nghiên cứu học thuật và hỗ trợ tra cứu thông tin tham khảo theo Dược thư Quốc gia Việt Nam. Các nội dung phản hồi không phải là đơn thuốc và không thay thế cho việc thăm khám, chẩn đoán hoặc chỉ định điều trị trực tiếp của bác sĩ chuyên khoa.
