@@ -31,7 +31,8 @@ class ConsultationService:
         self._history.clear()
 
     def _select_rag_docs(self, normalized_query: str) -> list[KnowledgeDocument]:
-        has_drug = self._normalizer.has_drug_intent(normalized_query)
+        dav_hits = self._retriever.search_dav_brands(normalized_query, top_k=2)
+        has_drug = self._normalizer.has_drug_intent(normalized_query) or bool(dav_hits)
         is_confirm = len(self._history) >= 2 and self._normalizer.is_short_confirmation(normalized_query)
         is_long_desc = len(normalized_query.split()) >= self._settings.rag.min_words_for_auto_rag
 
@@ -46,6 +47,22 @@ class ConsultationService:
 
         if has_drug:
             search_query = self._normalizer.expand_drug_query(search_query)
+
+        # Liên kết chéo Hoạt chất chính từ DAV 55k sang chuyên luận Dược thư Quốc gia
+        if dav_hits:
+            primary_ingredient = dav_hits[0][1]
+            kb_docs = (
+                self._retriever.search(primary_ingredient, top_k_drugs=2, top_k_diseases=0)
+                if primary_ingredient
+                else []
+            )
+            merged: list[KnowledgeDocument] = [dav_hits[0][0]]
+            seen_titles = {dav_hits[0][0].title}
+            for doc in kb_docs:
+                if doc.title not in seen_titles:
+                    merged.append(doc)
+                    seen_titles.add(doc.title)
+            return merged[:3]
 
         top_k_drugs = self._settings.rag.top_k_drugs if has_drug else 1
         top_k_diseases = 0 if has_drug else self._settings.rag.top_k_diseases
@@ -117,7 +134,10 @@ class ConsultationService:
             snippets = [doc.rag_text[:limit] for doc in docs]
             rag_block = "\n\n[THÔNG TIN DƯỢC THƯ QUỐC GIA & PHÁC ĐỒ THAM KHẢO]:\n" + "\n---\n".join(snippets)
 
-        is_drug_mode = self._normalizer.has_drug_intent(normalized_query) and not self._normalizer.is_red_flag_emergency(normalized_query)
+        is_drug_mode = (
+            (self._normalizer.has_drug_intent(normalized_query) or any("(DAV)" in d.title for d in docs))
+            and not self._normalizer.is_red_flag_emergency(normalized_query)
+        )
         if is_drug_mode:
             # Dùng riêng System Prompt Tra cứu Dược lý để không bị xung đột với luật "Lượt 1 chỉ hỏi 1 câu"
             sys_content = self._settings.prompts.system_drug_lookup + rag_block

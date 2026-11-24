@@ -40,6 +40,7 @@ class DecodingConfig:
 class RagConfig:
     drugs_jsonl: str
     diseases_jsonl: str
+    dav_brands_jsonl: str
     min_score_threshold: float
     top_k_drugs: int
     top_k_diseases: int
@@ -101,7 +102,8 @@ def load_settings(root_dir: Path | None = None) -> Settings:
         }
 
     rag_raw = dict(cfg["rag"])
-    for key in ("drugs_jsonl", "diseases_jsonl"):
+    rag_raw.setdefault("dav_brands_jsonl", ".\\src\\rag\\data\\dav_55k_brands.jsonl")
+    for key in ("drugs_jsonl", "diseases_jsonl", "dav_brands_jsonl"):
         p = Path(rag_raw[key])
         if not p.is_absolute():
             rag_raw[key] = str((base / p).resolve())

@@ -42,6 +42,11 @@ class IRagRetriever(ABC):
     def search(self, query: str, top_k_drugs: int = 2, top_k_diseases: int = 1) -> list[KnowledgeDocument]:
         pass
 
+    @abstractmethod
+    def search_dav_brands(self, query: str, top_k: int = 2) -> list[tuple[KnowledgeDocument, str]]:
+        """Tìm biệt dược đăng ký Bộ Y tế (DAV 55k), trả về danh sách (KnowledgeDocument, active_ingredient)."""
+        pass
+
     @property
     @abstractmethod
     def document_count(self) -> int:

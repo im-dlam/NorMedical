@@ -22,6 +22,7 @@
   "rag": {
     "drugs_jsonl": ".\\src\\rag\\data\\drugs_knowledge_base.jsonl",
     "diseases_jsonl": ".\\src\\rag\\data\\diseases_knowledge_base.jsonl",
+    "dav_brands_jsonl": ".\\src\\rag\\data\\dav_55k_brands.jsonl",
     "min_score_threshold": 12.0,
     "top_k_drugs": 3,
     "top_k_diseases": 1,
