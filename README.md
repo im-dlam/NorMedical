@@ -41,8 +41,6 @@
 | :---: | :---: |
 | ![Demo Giao diện Web](assets/img/demo_web.png) | ![Training Loss](assets/img/chart_training_loss.png) |
 
-*(Đặt ảnh chụp màn hình giao diện Web tại `assets/img/demo_web.png` để hiển thị trực tiếp trên GitHub.)*
-
 ---
 
 ## 2. Cơ sở Nghiên cứu & Khảo sát Thực tế
