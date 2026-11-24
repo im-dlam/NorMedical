@@ -2,11 +2,13 @@
 
 **Hệ thống Hỗ trợ Tư vấn Lâm sàng Đa lượt & Tra cứu Dược thư Quốc gia Việt Nam vận hành Cục bộ (On-Premise)**
 
-[![Model](https://img.shields.io/badge/HuggingFace-imdlam%2Fq3medical-0f3d5e?style=flat-square)](https://huggingface.co/imdlam/q3medical)
-[![Base Model](https://img.shields.io/badge/Base-Qwen3--VL--4B--Instruct-1e40af?style=flat-square)](https://huggingface.co/unsloth/Qwen3-VL-4B-Instruct-unsloth-bnb-4bit)
-[![Quantization](https://img.shields.io/badge/GGUF-Q4__K__M%20(4GB%20VRAM)-0e7490?style=flat-square)](https://huggingface.co/imdlam/q3medical)
-[![Backend](https://img.shields.io/badge/Backend-FastAPI%20%2B%20SSE-15803d?style=flat-square)](#6-hướng-dẫn-cài-đặt--khởi-chạy)
-[![Knowledge Base](https://img.shields.io/badge/RAG-2%2C427%20Tài%20liệu%20Y%20dược-334155?style=flat-square)](#3-kho-tri-thức--cơ-chế-truy-xuất-rag)
+<p>
+  <a href="https://huggingface.co/imdlam/q3medical"><img src="https://img.shields.io/badge/HuggingFace-imdlam%2Fq3medical-0f3d5e?style=flat-square" height="18" alt="HuggingFace" /></a>
+  <a href="https://huggingface.co/unsloth/Qwen3-VL-4B-Instruct-unsloth-bnb-4bit"><img src="https://img.shields.io/badge/Base-Qwen3--VL--4B-1e40af?style=flat-square" height="18" alt="Base Model" /></a>
+  <a href="https://huggingface.co/imdlam/q3medical"><img src="https://img.shields.io/badge/GGUF-Q4__K__M-0e7490?style=flat-square" height="18" alt="GGUF" /></a>
+  <a href="#6-hướng-dẫn-cài-đặt--khởi-chạy"><img src="https://img.shields.io/badge/FastAPI-SSE-15803d?style=flat-square" height="18" alt="FastAPI" /></a>
+  <a href="#3-kho-tri-thức--cơ-chế-truy-xuất-rag"><img src="https://img.shields.io/badge/RAG-2%2C427%20docs-334155?style=flat-square" height="18" alt="RAG" /></a>
+</p>
 
 ---
 
